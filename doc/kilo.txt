@@ -1,0 +1,136 @@
+*kilo.nvim*            Neovim plugin for the Kilo TUI
+
+==============================================================================
+CONTENTS                                     *kilo.nvim-contents*
+
+1. Introduction ................. |kilo.nvim-introduction|
+2. Requirements ................. |kilo.nvim-requirements|
+3. Installation ................. |kilo.nvim-installation|
+4. Configuration ................ |kilo-config|
+5. Usage ........................ |kilo-commands|
+6. API ......................... |kilo-api|
+7. Editor integration ........... |kilo.nvim-editor|
+8. Health ....................... |kilo.nvim-health|
+
+==============================================================================
+INTRODUCTION                                 *kilo.nvim-introduction*
+
+kilo.nvim integrates the Kilo TUI into Neovim. It provides a toggleable
+terminal split running `kilo` in the current working directory, and attaches
+the current line or a visual selection to the Kilo prompt as a file mention.
+
+==============================================================================
+REQUIREMENTS                                 *kilo.nvim-requirements*
+
+- Neovim 0.11+
+- `kilo` on PATH
+- `openssl` on PATH (optional): required for the editor integration channel.
+  Without it, mentions fall back to typed text. `:checkhealth kilo` reports
+  this.
+
+==============================================================================
+INSTALLATION                                 *kilo.nvim-installation*
+
+lazy.nvim:
+>
+  {
+    "Kilo-Org/kilo.nvim",
+    config = function()
+      ---@type kilo.Opts
+      vim.g.kilo_opts = {
+        -- Your configuration, if any
+      }
+    end,
+  }
+<
+vim.pack:
+>
+  vim.pack.add({ src = "https://github.com/Kilo-Org/kilo.nvim" })
+<
+Type checking with lazydev.nvim:
+`---@type kilo.Opts` annotations only resolve if your Lua LSP knows where to
+find kilo.nvim's type definitions. If you use lazydev.nvim
+(https://github.com/folke/lazydev.nvim), add a library entry for it:
+>
+  {
+    "folke/lazydev.nvim",
+    opts = {
+      library = {
+        { path = "kilo.nvim", words = { "kilo" } },
+      },
+    },
+  },
+<
+Without this, editing `vim.g.kilo_opts` still works at runtime, but lua_ls
+reports "Undefined type or alias `kilo.Opts`" as a diagnostic.
+
+==============================================================================
+CONFIGURATION                                 *kilo-config*
+
+Options are read from `vim.g.kilo_opts` at call time. Keymaps are registered
+once on VimEnter, so the table can be set in either lazy.nvim's `init =` or
+`config =` function.
+
+>
+  ---@type kilo.Opts
+  vim.g.kilo_opts = {
+    -- Split height when the split is at the bottom: a ratio of the window
+    -- (0 < h <= 1) or a row count (h > 1).
+    height = 0.30,
+    -- Split width when the split is on the side: a ratio of the window
+    -- (0 < w <= 1) or a column count (w > 1).
+    width = 0.40,
+    -- Side for a new split: "bottom" or "right".
+    side = "right",
+    -- Keymaps to register. Set to false to register none. Set an individual
+    -- key to false to disable only that one.
+    keys = {
+      toggle = "<leader>k.", -- toggle the Kilo terminal
+      range = "<leader>kr", -- send the visual selection
+      line = "<leader>kl",   -- send the current line
+      side = "<leader>ks",   -- move the split between bottom and right
+    },
+  }
+<
+
+==============================================================================
+USAGE                                          *kilo-commands*
+
+Command                Action
+------------------------------------------------------------------------------
+:KiloToggle            Toggle the Kilo terminal split.
+:KiloToggleSide        Move the split between the bottom and the right.
+:[range]KiloSend       Send the current line, or the given range, to Kilo.
+                       Without a range the cursor line is sent.
+
+The terminal-mode mappings `<leader>k.` and `<leader>ks` also work from inside
+the terminal. The split remembers the side it was last on until `kilo` exits,
+so toggling it off and back on restores that side instead of the configured
+`side`.
+
+==============================================================================
+API                                              *kilo-api*
+
+`require("kilo")` exposes:
+
+- `toggle()`: toggle the Kilo terminal split.
+- `toggle_side()`: move the split between the bottom and the right.
+- `send_line()`: send the current line to Kilo.
+- `send_selection()`: send the current visual selection to Kilo.
+
+==============================================================================
+EDITOR INTEGRATION                             *kilo.nvim-editor*
+
+When the Kilo terminal starts, kilo.nvim listens on a local WebSocket. If Kilo
+connects back (over `KILO_EDITOR_SSE_PORT`), file mentions are delivered over
+that channel and appear attached to the prompt. If no Kilo is connected,
+mentions are typed into the terminal as `@path#L-L`, which Kilo's file
+autocomplete parses.
+
+==============================================================================
+HEALTH                                         *kilo.nvim-health*
+
+Run `:checkhealth kilo` to verify the `kilo` binary, `openssl`, the Neovim
+version, and the editor-integration state.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

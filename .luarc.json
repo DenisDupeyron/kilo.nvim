@@ -1,0 +1,11 @@
+{
+  "runtime.version": "LuaJIT",
+  "runtime.path": ["lua/?.lua", "lua/?/init.lua"],
+  "diagnostics.globals": ["vim"],
+  "workspace.library": ["$VIMRUNTIME/lua"],
+  "workspace.checkThirdParty": false,
+  "format.defaultConfig": {
+    "indent_style": "space",
+    "indent_size": "2",
+  },
+}
